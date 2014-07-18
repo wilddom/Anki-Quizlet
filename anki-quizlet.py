@@ -5,8 +5,11 @@
 # Author:      Rolph Recto
 #
 # Created:     12/06/2012
+
 # Copyright:   (c) Rolph Recto 2012
 # Licence:     <your licence>
+# Revised and upGraded By Abdolmahdi saravi
+# image support functionality added
 #-------------------------------------------------------------------------------
 #!/usr/bin/env python
 
@@ -16,7 +19,7 @@ import sys
 import math
 import time
 import datetime as dt
-import urllib as url
+import urllib as url1
 import urllib2 as url2
 import json
 
@@ -26,7 +29,7 @@ from aqt.qt import *
 
 #PyQT
 from PyQt4.QtGui import *
-from PyQt4.Qt import Qt
+# from PyQt4.Qt import Qt
 
 #copied straight from anki.stdmodels
 #it is necessary to create a custom model
@@ -295,13 +298,21 @@ class QuizletWindow(QWidget):
         mw.col.models.setCurrent(model)
         mw.col.models.current()["did"] = deck["id"]
         mw.col.models.save(model)
-
-        for term in terms:
+#         f=open('terms.txt','wb')
+        txt="""
+        <div><img src="{0}" /></div>
+        """
+        for term in terms:            
             note = mw.col.newNote()
             note["Front"] = term["term"]
             note["Back"] = term["definition"]
+            if not term["image"] is None:
+                #stop the previous thread first
+                self.fileDownloader(term["image"]["url"])
+                note["Back"]+=txt.format(term["image"]["url"].split('/')[-1]) 
+                mw.app.processEvents()
             mw.col.addNote(note)
-
+#         f.close()
         mw.col.reset()
         mw.reset()
 
@@ -476,6 +487,24 @@ class QuizletWindow(QWidget):
             self.label_results.setText( ("Displaying results {0} - {1} of {2}."
                 .format(first, last, num_results)) )
             self.table_results.verticalHeader().setOffset(first)
+            
+    def fileDownloader(self, url):
+        file_name = url.split('/')[-1]
+        url1.urlretrieve(url,file_name)
+#         u = url2.urlopen(url)
+#         f = open(file_name, 'wb')
+#         meta = u.info()
+#         file_size = int(meta.getheaders("Content-Length")[0])
+#         
+#         file_size_dl = 0
+#         block_sz = 8192
+#         while True:
+#             buffer = u.read(block_sz)
+#             if not buffer:
+#                 break       
+#             file_size_dl += len(buffer)
+#             f.write(buffer)
+#             f.close()               
 
 
 class QuizletDownloader(QThread):
