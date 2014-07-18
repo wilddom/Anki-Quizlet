@@ -37,14 +37,14 @@ from PyQt4.QtGui import *
 def addCustomModel(name, col):
     """create a new custom model for the imported deck"""
     mm = col.models
-    m = mm.new(_("Basic")+" ({0})".format(name))
+    m = mm.new(u"{} ({})".format(_("Basic"), name))
     fm = mm.newField(_("Front"))
     mm.addField(m, fm)
     fm = mm.newField(_("Back"))
     mm.addField(m, fm)
     t = mm.newTemplate(_("Card 1"))
-    t['qfmt'] = _("{{Front}}")
-    t['afmt'] = "{{FrontSide}}\n\n<hr id=answer>\n\n"+_("{{Back}}")
+    t['qfmt'] = "{{"+_("Front")+"}}"
+    t['afmt'] = "{{FrontSide}}\n\n<hr id=answer>\n\n"+"{{"+_("Back")+"}}"
     mm.addTemplate(m, t)
     mm.add(m)
     return m
@@ -245,14 +245,14 @@ class QuizletWindow(QWidget):
         #set the GUI
         self.hideTable()
         self.button_search.setEnabled(False)
-        self.label_results.setText( ("Importing deck <b>{0}</b> ..."
+        self.label_results.setText( (u"Importing deck <b>{0}</b> ..."
             .format(self.results["sets"][index]["title"])) )
 
         #build URL
-        deck_url = ("https://api.quizlet.com/2.0/sets/{0}/terms".
+        deck_url = (u"https://api.quizlet.com/2.0/sets/{0}/terms".
             format(self.results["sets"][index]["id"]))
 
-        deck_url += "?client_id={0}".format(QuizletWindow.__APIKEY)
+        deck_url += u"?client_id={0}".format(QuizletWindow.__APIKEY)
 
         #stop the previous thread first
         if not self.thread == None:
@@ -268,7 +268,7 @@ class QuizletWindow(QWidget):
 
         #error with fetching data
         if self.thread.error:
-            self.label_results.setText( ("Failed to load deck <b>{0}</b>!"
+            self.label_results.setText( (u"Failed to load deck <b>{0}</b>!"
                 .format(self.results["sets"][index]["title"])) )
         #everything went through!
         else:
@@ -277,7 +277,7 @@ class QuizletWindow(QWidget):
 
             self.showTable()
             self.button_search.setEnabled(True)
-            self.label_results.setText( ("Successfully imported deck <b>{0}</b>."
+            self.label_results.setText( (u"Successfully imported deck <b>{0}</b>."
                 .format(self.results["sets"][index]["title"])) )
 
         self.thread.terminate()
@@ -299,17 +299,17 @@ class QuizletWindow(QWidget):
         mw.col.models.current()["did"] = deck["id"]
         mw.col.models.save(model)
 #         f=open('terms.txt','wb')
-        txt="""
+        txt=u"""
         <div><img src="{0}" /></div>
         """
         for term in terms:            
             note = mw.col.newNote()
-            note["Front"] = term["term"]
-            note["Back"] = term["definition"]
+            note[_("Front")] = term["term"]
+            note[_("Back")] = term["definition"]
             if not term["image"] is None:
                 #stop the previous thread first
                 self.fileDownloader(term["image"]["url"])
-                note["Back"]+=txt.format(term["image"]["url"].split('/')[-1]) 
+                note[_("Back")]+=txt.format(term["image"]["url"].split('/')[-1])
                 mw.app.processEvents()
             mw.col.addNote(note)
 #         f.close()
@@ -327,7 +327,7 @@ class QuizletWindow(QWidget):
     def onPageCurrent(self):
         """let user jump to any page"""
         page, ok = QInputDialog.getInteger(self, "Jump to Page",
-            "What page? ({0} - {1})".format(1, self.results["total_pages"]),
+            u"What page? ({0} - {1})".format(1, self.results["total_pages"]),
             1, 1, self.results["total_pages"])
 
         if ok:
@@ -408,14 +408,14 @@ class QuizletWindow(QWidget):
             return "Error: Must have input to search!"
         #search for deck name only
         elif not self.name == "" and self.user == "":
-            return "Searching for \"{0}\" ...".format(self.name)
+            return u"Searching for \"{0}\" ...".format(self.name)
         #search for deck name and user
         elif not self.name == "" and not self.user == "":
-            return ("Searching for \"{0}\" by user <u>{1}</u> ..."
+            return (u"Searching for \"{0}\" by user <u>{1}</u> ..."
                 .format(self.name, self.user))
         #search for user only
         elif self.name == "" and not self.user == "":
-            return "Searching for decks by user <u>{0}</u> ...".format(self.user)
+            return u"Searching for decks by user <u>{0}</u> ...".format(self.user)
 
     def fetchResults(self, page=1):
         """load results"""
@@ -435,14 +435,14 @@ class QuizletWindow(QWidget):
             return
 
         #build search URL
-        search_url = "https://api.quizlet.com/2.0/search/sets"
-        search_url += "?q={0}".format(self.name)
+        search_url = u"https://api.quizlet.com/2.0/search/sets"
+        search_url += u"?q={0}".format(self.name)
         if not self.user == "":
-            search_url += "&creator={0}".format(self.user)
-        search_url += "&page={0}".format(page)
-        search_url += "&per_page={0}".format(QuizletWindow.RESULTS_PER_PAGE)
-        search_url += "&sort={0}".format(self.sort)
-        search_url += "&client_id={0}".format(QuizletWindow.__APIKEY)
+            search_url += u"&creator={0}".format(self.user)
+        search_url += u"&page={0}".format(page)
+        search_url += u"&per_page={0}".format(QuizletWindow.RESULTS_PER_PAGE)
+        search_url += u"&sort={0}".format(self.sort)
+        search_url += u"&client_id={0}".format(QuizletWindow.__APIKEY)
 
         #stop the previous thread first
         if not self.thread == None:
@@ -484,7 +484,7 @@ class QuizletWindow(QWidget):
                 else num_results)
             self.result_page = page
             self.button_current.setText(str(page))
-            self.label_results.setText( ("Displaying results {0} - {1} of {2}."
+            self.label_results.setText( (u"Displaying results {0} - {1} of {2}."
                 .format(first, last, num_results)) )
             self.table_results.verticalHeader().setOffset(first)
             
@@ -538,3 +538,4 @@ def runQuizletPlugin():
 action = QAction("Import from Quizlet", mw)
 mw.connect(action, SIGNAL("triggered()"), runQuizletPlugin)
 mw.form.menuTools.addAction(action)
+
