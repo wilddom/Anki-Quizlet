@@ -436,9 +436,9 @@ class QuizletWindow(QWidget):
 
         #build search URL
         search_url = u"https://api.quizlet.com/2.0/search/sets"
-        search_url += u"?q={0}".format(self.name)
+        search_url += u"?q={0}".format(url1.quote(self.name))
         if not self.user == "":
-            search_url += u"&creator={0}".format(self.user)
+            search_url += u"&creator={0}".format(url1.quote(self.user))
         search_url += u"&page={0}".format(page)
         search_url += u"&per_page={0}".format(QuizletWindow.RESULTS_PER_PAGE)
         search_url += u"&sort={0}".format(self.sort)
