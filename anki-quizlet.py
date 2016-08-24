@@ -22,6 +22,7 @@ import datetime as dt
 import urllib as url1
 import urllib2 as url2
 import json
+import operator
 
 #Anki
 from aqt import mw
@@ -435,14 +436,18 @@ class QuizletWindow(QWidget):
             return
 
         #build search URL
-        search_url = u"https://api.quizlet.com/2.0/search/sets"
-        search_url += u"?q={0}".format(url1.quote(self.name))
-        if not self.user == "":
-            search_url += u"&creator={0}".format(url1.quote(self.user))
-        search_url += u"&page={0}".format(page)
-        search_url += u"&per_page={0}".format(QuizletWindow.RESULTS_PER_PAGE)
-        search_url += u"&sort={0}".format(self.sort)
-        search_url += u"&client_id={0}".format(QuizletWindow.__APIKEY)
+        if not self.user == "" and self.name == "":
+            search_url = u"https://api.quizlet.com/2.0/users/{0}".format(url1.quote(self.user))
+            search_url += u"?client_id={0}".format(QuizletWindow.__APIKEY)
+        else:
+            search_url = u"https://api.quizlet.com/2.0/search/sets"
+            search_url += u"?q={0}".format(url1.quote(self.name))
+            if not self.user == "":
+                search_url += u"&creator={0}".format(url1.quote(self.user))
+            search_url += u"&page={0}".format(page)
+            search_url += u"&per_page={0}".format(QuizletWindow.RESULTS_PER_PAGE)
+            search_url += u"&sort={0}".format(self.sort)
+            search_url += u"&client_id={0}".format(QuizletWindow.__APIKEY)
 
         #stop the previous thread first
         if not self.thread == None:
@@ -463,6 +468,14 @@ class QuizletWindow(QWidget):
             self.setPage(QuizletWindow.RESULT_ERROR)
         #everything went through!
         else:
+            if not "total_results" in self.results:
+                if self.sort == "title":
+                    self.results["sets"].sort(key=operator.itemgetter('title'))
+                elif self.sort == "most_recent":
+                    self.results["sets"].sort(key=operator.itemgetter('created_date'), reverse=True)
+                self.results["total_results"] = len(self.results["sets"])
+                self.results["total_pages"] = 1
+                self.results["page"] = 1
             self.setPage(page)
             self.loadResultsToTable()
             self.showTable()
@@ -478,10 +491,8 @@ class QuizletWindow(QWidget):
             self.label_results.setText( ("No results found!") )
         else:
             num_results = self.results["total_results"]
-            first = ((page-1)*50)+1
-            last = (page*QuizletWindow.RESULTS_PER_PAGE
-                if page*QuizletWindow.RESULTS_PER_PAGE < num_results
-                else num_results)
+            first = ((page-1)*QuizletWindow.RESULTS_PER_PAGE)+1
+            last = first + len(self.results["sets"])
             self.result_page = page
             self.button_current.setText(str(page))
             self.label_results.setText( (u"Displaying results {0} - {1} of {2}."
